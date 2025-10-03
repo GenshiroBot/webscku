@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GenshiroBot - Script WhatsApp, Telegram & Website Gratis</title>
+
+    <!-- Meta SEO -->
+    <meta name="description" content="Script WhatsApp Bot, Telegram Bot, Website premium gratis & update terbaru. Download mudah, cepat, dan 100% free! Cocok untuk belajar & project Anda.">
+    <meta name="keywords" content="script bot whatsapp, sc bot wa gratis, script telegram, script website gratis, source code bot wa, download bot whatsapp terbaru, genshirobot, sc bot wa premium, panel bot wa, freelance wa, sc bot, baileys bot, panel bot wa gratis, bokep">
+
+    <!-- Favicon (icon kecil di tab browser) -->
+    <link rel="icon" type="image/png" href="https://files.catbox.moe/ph2knk.jpg" />
+
+    <!-- Open Graph (Preview saat dishare di sosmed/WA/Telegram) -->
+    <meta property="og:title" content="GenshiroBot - Script Gratis" />
+    <meta property="og:description" content="Download script WhatsApp Bot, Telegram Bot, dan Website gratis dengan update terbaru. Premium tapi gratis!">
+    <meta property="og:image" content="https://files.catbox.moe/ph2knk.jpg" />
+    <meta property="og:url" content="https://sc-genshirobot.my.id" />
+    <meta property="og:type" content="website" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="GenshiroBot - Script Gratis">
+    <meta name="twitter:description" content="Download script WhatsApp Bot, Telegram Bot, dan Website gratis dengan update terbaru. Premium tapi gratis!">
+    <meta name="twitter:image" content="https://files.catbox.moe/ph2knk.jpg">
+
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        /* CORE STYLES - Cool, Bright, and Simple */
+        :root {
+            --accent-color: #06B6D4; /* Bright Cyan/Blue */
+            font-family: 'Inter', sans-serif;
+        }
+        body {
+            background-color: #F8FAFC; /* Lightest Gray Background */
+        }
+
+        /* FRAME STYLING - Simple, Cool, Bright */
+        .app-card {
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border: 1px solid #E2E8F0;
+        }
+        
+        /* INPUT STYLING - Clean and Elevated */
+        .app-input {
+            @apply w-full p-3 bg-white border border-gray-300 text-gray-800 placeholder-gray-400 rounded-lg transition-all duration-200;
+            @apply focus:outline-none focus:border-[var(--accent-color)] focus:ring-2 focus:ring-[var(--accent-color)]/30;
+        }
+
+        /* BUTTON STYLING */
+        .app-button {
+            @apply px-5 py-2 font-semibold text-center rounded-lg transition-all duration-200 ease-in-out text-sm shadow-md;
+        }
+        .primary-button {
+            @apply bg-[var(--accent-color)] text-white hover:bg-cyan-600 shadow-cyan-500/30;
+        }
+        .secondary-button {
+            @apply bg-gray-200 text-gray-700 hover:bg-gray-300 shadow-none;
+        }
+        .danger-button {
+            @apply bg-red-500 text-white hover:bg-red-600 shadow-red-500/30;
+        }
+
+        /* View Transition */
+        .view-transition-enter {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        .view-transition-enter-active {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- AUDIO ELEMENT (Hidden, controlled by JS. Uses a royalty-free loop as default) -->
+    <!-- You can change this 'src' URL to any public MP3 file you prefer -->
+    <audio id="background-music-player" loop src="https://files.catbox.moe/lxghmm.mp3"></audio>
+
+    <!-- Status Bar (Clean Clock and discreet Music indicator) -->
+    <div class="fixed top-0 right-0 p-4 text-sm text-gray-500 font-medium flex items-center space-x-4">
+        <span id="music-status" class="text-xs text-gray-400 flex items-center hidden">
+            <i id="music-icon" class="fas fa-volume-off mr-1"></i> <span id="music-text">Music Off</span>
+        </span>
+        <span id="system-clock" class="text-gray-700">00:00:00</span>
+    </div>
+
+    <!-- Main Application Container (Card Centered) -->
+    <div id="app-container" class="min-h-screen flex items-center justify-center p-4">
+        <!-- App Card will be injected here -->
+    </div>
+
+    <!-- Modal (Standard Alert) -->
+    <div id="modal-container" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/30 backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        <div id="modal-content" class="app-card p-6 w-full max-w-sm transition-all duration-300 ease-out text-center">
+            <h3 id="modal-title" class="text-xl font-semibold mb-2 text-gray-900"></h3>
+            <p id="modal-message" class="text-sm text-gray-500 mb-6"></p>
+            <div class="mt-4 flex justify-center">
+                <button onclick="hideModal()" class="app-button primary-button w-full">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 z-[200] hidden items-center justify-center bg-white/70 backdrop-blur-sm opacity-0 transition-opacity duration-200">
+        <div class="flex flex-col items-center">
+            <svg class="animate-spin h-8 w-8 text-cyan-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="mt-3 text-gray-600 text-sm">Loading...</p>
+        </div>
+    </div>
+
+
+    <script type="module">
+        // --- Firebase Imports ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, setPersistence, browserSessionPersistence, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, doc, setDoc, updateDoc, deleteDoc, 
+            onSnapshot, collection, query, where, addDoc, getDocs, 
+            runTransaction, getDoc, setLogLevel, serverTimestamp 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // Expose Firebase functions globally
+        window.firebase = {
+            initializeApp, getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken,
+            getFirestore, doc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, addDoc, getDocs, runTransaction, getDoc,
+            setLogLevel, setPersistence, browserSessionPersistence, serverTimestamp
+        };
+
+
+        // Global Constants and Variables
+        const VIEW_LANDING = 'landing';
+        const VIEW_TOKEN = 'token';
+        const VIEW_DASHBOARD = 'dashboard';
+        const VIEW_THANKYOU = 'complete';
+        const VIEW_ADMIN = 'admin';
+
+        let currentView = VIEW_LANDING;
+        let auth, db, userId;
+        let tokenData = null;
+        
+        const STAGGER_DELAY = 50; 
+
+        // --- EXTERNAL FIREBASE CONFIGURATION (Placeholder) ---
+        const EXTERNAL_FIREBASE_CONFIG = {
+            apiKey: "AIzaSyBIChk3UzndLZJPqBZqsM_64crAmqkSxeA", 
+            authDomain: "websitescript-cfd0b.firebaseapp.com",
+            projectId: "websitescript-cfd0b",
+            storageBucket: "websitescript-cfd0b.firebasestorage.app",
+            messagingSenderId: "407456156819",
+            appId: "1:407456156819:web:f46b794241e3855c3b71166",
+            measurementId: "G-CZXZNQSVLZ"
+        };
+        
+        // The App ID used in the Firestore path
+        const FIREBASE_APP_ID = "1:407456156819:web:f46b794241e3855c3b71166"; 
+
+        // --- Global Data Structures ---
+        const MOCK_SCRIPTS = [
+            { 
+                id: 'broadcast', 
+                name: 'Broadcast Scheduler', 
+                icon: 'fas fa-bullhorn',
+                version: '3.1.2', 
+                size: '1.2 MB', 
+                description: 'Advanced scheduling and multi-channel injection engine.', 
+                downloadUrl: 'https://files.catbox.moe/download.zip?script=broadcast' 
+            },
+            { 
+                id: 'simplebase', 
+                name: 'SimpleBase - Bot WhatsApp', 
+                icon: 'fas fa-robot',
+                version: '1.0.0', 
+                size: '3.9 KB', 
+                description: 'base bot whatsapp simple yang dibuat untuk pengguna yang ingin membuat bot tanpa ribet.', 
+                downloadUrl: 'https://files.catbox.moe/8kczax.zip' 
+            },
+            { 
+                id: 'data-harvester', 
+                name: 'Data Harvester PRO', 
+                icon: 'fas fa-database',
+                version: '2.0.1', 
+                size: '3.5 MB', 
+                description: 'Enterprise-grade parallel extraction with proxy rotation.', 
+                downloadUrl: 'https://files.catbox.moe/download.zip?script=data-harvester'
+            },
+        ];
+
+        // --- Helper Functions ---
+
+        /** Update the status clock */
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+            document.getElementById('system-clock').textContent = timeString;
+        }
+
+        /** Show the loading overlay */
+        function showLoading(duration = 400) {
+            const overlay = document.getElementById('loading-overlay');
+            overlay.classList.remove('hidden');
+            setTimeout(() => {
+                overlay.classList.add('opacity-100');
+            }, 10); 
+            
+            return new Promise(resolve => setTimeout(resolve, duration));
+        }
+
+        /** Hide the loading overlay */
+        function hideLoading() {
+            const overlay = document.getElementById('loading-overlay');
+            overlay.classList.remove('opacity-100');
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+            }, 300); 
+        }
+
+        /** Display a custom modal instead of alert/confirm */
+        window.showModal = function (title, message, isSuccess = true) {
+            const container = document.getElementById('modal-container');
+            const titleEl = document.getElementById('modal-title');
+            const messageEl = document.getElementById('modal-message');
+            
+            titleEl.textContent = title;
+            messageEl.textContent = message; 
+
+            titleEl.classList.remove('text-red-600', 'text-gray-900');
+            titleEl.classList.add(isSuccess ? 'text-gray-900' : 'text-red-600');
+
+            container.classList.remove('hidden');
+            setTimeout(() => {
+                container.classList.add('opacity-100');
+            }, 10);
+        }
+
+        window.hideModal = function () {
+            const container = document.getElementById('modal-container');
+            
+            container.classList.remove('opacity-100');
+
+            setTimeout(() => {
+                container.classList.add('hidden');
+            }, 300);
+        }
+
+        /** Main render function to switch views */
+        window.renderView = async function(view) {
+            await showLoading(200); 
+            
+            const container = document.getElementById('app-container');
+            const oldCard = container.querySelector('.app-card');
+
+            // 1. Smooth fade out the old card
+            if (oldCard) {
+                oldCard.classList.remove('view-transition-enter-active');
+                oldCard.classList.add('view-transition-enter');
+                await new Promise(resolve => setTimeout(resolve, 300)); 
+            }
+            
+            // 2. Clear content
+            container.innerHTML = '';
+            currentView = view;
+            
+            if (!userId && view !== VIEW_LANDING) {
+                console.error("Authentication not ready. Redirecting to landing.");
+                return renderView(VIEW_LANDING);
+            }
+
+            // 3. Render the new Card Shell (Wrapper Card)
+            const titleMap = {
+                [VIEW_LANDING]: 'GenshiroBot',
+                [VIEW_TOKEN]: 'Key Validation',
+                [VIEW_DASHBOARD]: 'SOURCE CODE',
+                [VIEW_THANKYOU]: 'Download Complete',
+                [VIEW_ADMIN]: 'Admin Console'
+            };
+            const windowTitle = titleMap[view] || 'Application Error';
+
+            container.innerHTML = `
+                <div class="app-card w-full max-w-4xl mx-auto view-transition-enter overflow-hidden">
+                    <!-- Header -->
+                    <div class="p-5 border-b border-gray-200 flex justify-between items-center bg-cyan-50">
+                        <h1 class="text-xl font-bold text-gray-800">${windowTitle}</h1>
+                        <button onclick="stopMusic(); tokenData = null; renderView('${VIEW_LANDING}')" 
+                                class="text-sm text-gray-500 hover:text-red-500 transition-colors">
+                            <i class="fas fa-sign-out-alt mr-1"></i> Sign Out
+                        </button>
+                    </div>
+                    <!-- Content -->
+                    <div id="window-content" class="p-6 overflow-y-auto max-h-[85vh]">
+                        <!-- View-specific content goes here -->
+                    </div>
+                </div>
+            `;
+
+            const contentContainer = document.getElementById('window-content');
+
+            const viewMap = {
+                [VIEW_LANDING]: renderLoginContent,
+                [VIEW_TOKEN]: renderAuthContent,
+                [VIEW_DASHBOARD]: renderCatalogContent,
+                [VIEW_THANKYOU]: renderCompleteContent,
+                [VIEW_ADMIN]: renderAdminContent
+            };
+
+            if (viewMap[view]) {
+                await viewMap[view](contentContainer);
+            } else {
+                contentContainer.innerHTML = `<p class="text-red-500 text-lg font-semibold">Error: View module failed to load.</p>`;
+            }
+            
+            // 4. Smooth fade in the new Card Shell
+            const newCard = container.querySelector('.app-card');
+            if (newCard) {
+                 newCard.classList.remove('view-transition-enter');
+                 newCard.classList.add('view-transition-enter-active');
+            }
+            
+            hideLoading();
+        }
+        
+        // --- CONTENT RENDERING FUNCTIONS ---
+
+        /** 1. Landing Page Content */
+        async function renderLoginContent(container) {
+            container.classList.add('text-center');
+            container.innerHTML = `
+                <div class="max-w-xs mx-auto space-y-6 pt-6 pb-4">
+                    <div class="staggered-item" style="transition-delay: 0ms;">
+                        <span class="text-5xl mb-4 block text-[var(--accent-color)]"><i class="fas fa-key"></i></span>
+                    </div>
+                    <div class="staggered-item" style="transition-delay: ${STAGGER_DELAY * 1}ms;">
+                        <h2 class="text-2xl font-semibold text-gray-800">
+                            GenshiroBot - SC
+                        </h2>
+                    </div>
+                    <div class="staggered-item" style="transition-delay: ${STAGGER_DELAY * 2}ms;">
+                        <p class="text-base text-gray-500">
+                            Klik Login Dibawah
+                            YT: GenshiroBot
+                            TT: GenshiroBot
+                            WA: +6289671231931
+                        </p>
+                        <p class="text-xs text-gray-400 mt-2">Session ID: ${userId}</p>
+                    </div>
+                    <div class="staggered-item pt-4" style="transition-delay: ${STAGGER_DELAY * 3}ms;">
+                        <button onclick="startSessionAndPlayMusic()" class="app-button primary-button w-full">
+                            <i class="fas fa-play mr-1"></i> LOGIN
+                        </button>
+                    </div>
+                </div>
+            `;
+            setTimeout(() => {
+                document.querySelectorAll('.staggered-item').forEach(el => el.classList.add('view-transition-enter-active'));
+            }, 10);
+        }
+        
+        /** Handler for the main button click */
+        window.startSessionAndPlayMusic = function() {
+            const audioPlayer = document.getElementById('background-music-player');
+            const musicStatus = document.getElementById('music-status');
+            const musicIcon = document.getElementById('music-icon');
+            const musicText = document.getElementById('music-text');
+
+            musicStatus.classList.remove('hidden');
+            
+            // Attempt to play music, which is allowed because it's triggered by a user click
+            audioPlayer.volume = 0.5; // Set a reasonable default volume
+            audioPlayer.play().then(() => {
+                console.log("Background music started successfully.");
+                musicIcon.classList.remove('fa-volume-off');
+                musicIcon.classList.add('fa-volume-up', 'text-green-500');
+                musicText.textContent = 'Music On';
+            }).catch(error => {
+                console.warn("Autoplay prevented or failed (this is normal if no audio source is valid).", error);
+                musicIcon.classList.add('fa-volume-off', 'text-red-500');
+                musicText.textContent = 'Music Failed';
+            });
+            
+            // Now render the next view
+            renderView(VIEW_TOKEN);
+        }
+
+        /** 2. User Token Page Content (Unchanged) */
+        async function renderAuthContent(container) {
+            container.classList.remove('text-center');
+            container.innerHTML = `
+                <div id="token-form-container" class="max-w-md mx-auto space-y-6">
+                    <div class="staggered-item" style="transition-delay: 0ms;">
+                        <p class="text-lg font-medium text-gray-600 mb-4">Enter your secure license key below:</p>
+                    </div>
+                    
+                    <div class="staggered-item" style="transition-delay: ${STAGGER_DELAY * 1}ms;">
+                        <label for="token-input" class="text-sm font-medium text-gray-700 mb-1 block">LICENSE KEY</label>
+                        <input type="text" id="token-input" placeholder="e.g., NEXUS-PRO-2025" class="app-input uppercase">
+                    </div>
+                    
+                    <div class="flex justify-between space-x-4 pt-4">
+                        <div class="staggered-item" style="transition-delay: ${STAGGER_DELAY * 2}ms;">
+                            <button onclick="stopMusic(); renderView('${VIEW_LANDING}')" class="app-button secondary-button w-full">
+                                Cancel
+                            </button>
+                        </div>
+                        <div class="staggered-item" style="transition-delay: ${STAGGER_DELAY * 3}ms;">
+                            <button onclick="validateToken()" class="app-button primary-button w-full">
+                                <i class="fas fa-check-circle mr-1"></i> Validate
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            setTimeout(() => {
+                document.querySelectorAll('.staggered-item').forEach(el => el.classList.add('view-transition-enter-active'));
+            }, 10);
+        }
+
+        /** 3. Script Dashboard Content (Unchanged) */
+        async function renderCatalogContent(container) {
+            if (!tokenData || tokenData.usageRemaining <= 0) {
+                tokenData = null;
+                return renderView(VIEW_TOKEN);
+            }
+
+            const allowedScriptsData = MOCK_SCRIPTS.filter(script => tokenData.allowedScripts.includes(script.id));
+            const isLowUsage = tokenData.usageRemaining < 3;
+            
+            container.innerHTML = `
+                <div class="staggered-item" style="transition-delay: 0ms;">
+                    <div class="flex justify-between items-center pb-4 border-b border-gray-200 mb-6">
+                        <h2 class="text-xl font-semibold text-gray-800">Available Modules (${allowedScriptsData.length})</h2>
+                        <div class="text-sm font-medium text-gray-500 flex items-center">
+                            <span class="mr-2">Remaining Cycles:</span>
+                            <span class="px-3 py-1 rounded-full text-white ${isLowUsage ? 'bg-red-500' : 'bg-[var(--accent-color)]'} font-semibold text-xs">
+                                ${tokenData.usageRemaining} / ${tokenData.usageLimit}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="w-full space-y-3" id="scripts-list">
+                    <!-- Scripts will be injected here -->
+                </div>
+            `;
+            
+            const scriptsListEl = document.getElementById('scripts-list');
+            allowedScriptsData.forEach((script, index) => {
+                const scriptCard = document.createElement('div');
+                
+                scriptCard.className = `p-4 bg-gray-50 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0 transition-shadow duration-200 ease-in-out hover:shadow-lg hover:shadow-cyan-100/50 staggered-item view-transition-enter`;
+                scriptCard.style.transitionDelay = `${STAGGER_DELAY * (index + 1)}ms`; 
+                
+                scriptCard.innerHTML = `
+                    <div class="flex items-center space-x-4 flex-grow">
+                        <span class="text-2xl text-[var(--accent-color)]"><i class="${script.icon}"></i></span>
+                        <div>
+                            <h3 class="text-base font-semibold text-gray-800">${script.name} <span class="text-xs text-gray-400">v${script.version}</span></h3>
+                            <p class="text-sm text-gray-500">${script.description}</p>
+                        </div>
+                    </div>
+                    
+                    <button onclick="handleDownload('${script.id}')" class="app-button primary-button text-sm flex-shrink-0">
+                        <i class="fas fa-download mr-1"></i> Deploy (${script.size})
+                    </button>
+                `;
+                scriptsListEl.appendChild(scriptCard);
+            });
+
+            setTimeout(() => {
+                document.querySelectorAll('.staggered-item').forEach(el => el.classList.add('view-transition-enter-active'));
+            }, 10);
+        }
+
+        /** 4. Transfer Complete Content (Unchanged) */
+        async function renderCompleteContent(container) {
+            container.classList.add('text-center');
+            container.innerHTML = `
+                <div class="max-w-sm mx-auto space-y-6 pt-6 pb-4">
+                    <div class="staggered-item" style="transition-delay: 0ms;">
+                        <span class="text-5xl mb-4 block text-green-500"><i class="fas fa-check-circle"></i></span>
+                    </div>
+                    <div class="staggered-item" style="transition-delay: ${STAGGER_DELAY * 1}ms;">
+                        <h2 class="text-2xl font-semibold mb-2 text-gray-800">
+                            Transfer Successful
+                        </h2>
+                    </div>
+                    <div class="staggered-item" style="transition-delay: ${STAGGER_DELAY * 2}ms;">
+                        <p class="text-base font-medium mb-6 text-gray-500">
+                            Your module has been successfully deployed. One usage cycle has been debited.
+                        </p>
+                    </div>
+                    
+                    <div class="space-y-4 flex flex-col items-center pt-4">
+                        <div class="staggered-item" style="transition-delay: ${STAGGER_DELAY * 3}ms;">
+                            <button onclick="renderView('${VIEW_DASHBOARD}')" class="app-button secondary-button w-full max-w-xs">
+                                Return to Catalog
+                            </button>
+                        </div>
+                        <div class="staggered-item" style="transition-delay: ${STAGGER_DELAY * 4}ms;">
+                            <button onclick="stopMusic(); renderView('${VIEW_LANDING}')" class="app-button danger-button w-full max-w-xs">
+                                <i class="fas fa-power-off mr-1"></i> End Session
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            setTimeout(() => {
+                document.querySelectorAll('.staggered-item').forEach(el => el.classList.add('view-transition-enter-active'));
+            }, 10);
+        }
+
+        /** 5. Admin Panel Content (Unchanged) */
+        async function renderAdminContent(container) {
+            if (!tokenData || !tokenData.isAdminToken) {
+                tokenData = null;
+                return renderView(VIEW_TOKEN); 
+            }
+
+            container.innerHTML = `<div class="p-8 text-center text-gray-500">Loading token database...</div>`;
+            
+            let tokenList = [];
+            try {
+                const tokensRef = getTokensCollectionRef();
+                const q = window.firebase.query(tokensRef);
+                const snapshot = await window.firebase.getDocs(q);
+                // Filter out the internal system token
+                tokenList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(t => t.tokenValue !== 'ADMIN-ROOT');
+            } catch (error) {
+                console.error("Error fetching tokens:", error);
+                showModal("Database Error", "Could not load the active token list from the database.", false);
+                container.innerHTML = `<p class="text-red-500 text-lg">Error: Admin data load failed.</p>`;
+                return;
+            }
+
+            // Render final content
+            container.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Create New Token Panel (Col 1) -->
+                    <div class="lg:col-span-1 p-5 bg-gray-50 rounded-lg border border-gray-200 space-y-5 shadow-inner">
+                        <h3 class="text-lg font-semibold text-gray-800 border-b border-gray-300 pb-3"><i class="fas fa-plus-circle mr-2 text-green-500"></i>Create New License</h3>
+                        <div class="space-y-4">
+                            <input type="text" id="new-token-value" placeholder="LICENSE KEY NAME (PRO-DEV-1)" class="app-input text-sm uppercase">
+                            <input type="number" id="new-token-usage" placeholder="Usage Limit (1+)" class="app-input text-sm" min="1" value="5">
+                            
+                            <div class="p-4 bg-white rounded-lg border border-gray-200 space-y-2">
+                                <label class="block text-sm font-semibold text-gray-700">Attached Modules:</label>
+                                ${MOCK_SCRIPTS.map(script => `
+                                    <label class="flex items-center text-sm text-gray-600">
+                                        <input type="checkbox" id="script-${script.id}" value="${script.id}" checked class="w-4 h-4 text-[var(--accent-color)] bg-gray-100 border-gray-300 rounded focus:ring-[var(--accent-color)] mr-2">
+                                        ${script.name}
+                                    </label>
+                                `).join('')}
+                            </div>
+
+                            <label class="flex items-center text-sm font-medium text-red-600 pt-2">
+                                <input type="checkbox" id="is-admin-token" class="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500 mr-2">
+                                <i class="fas fa-shield-alt mr-1"></i> Grant Root Access
+                            </label>
+                            
+                            <button onclick="createNewToken()" class="app-button primary-button w-full text-base mt-4">
+                                <i class="fas fa-magic mr-1"></i> Provision Key
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Active Tokens List (Col 2/3) -->
+                    <div class="lg:col-span-2 p-5 bg-gray-50 rounded-lg border border-gray-200 space-y-6 shadow-inner">
+                        <h3 class="text-lg font-semibold text-gray-800 border-b border-gray-300 pb-3">Active Licenses (${tokenList.length})</h3>
+                        <div class="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+                            ${tokenList.length > 0 ? tokenList.map(t => `
+                                <div class="p-3 bg-white border border-gray-200 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center shadow-sm hover:shadow-md">
+                                    <div class="flex-grow text-sm">
+                                        <p class="text-gray-800 font-semibold">${t.tokenValue}</p>
+                                        <p class="text-xs text-gray-500 mt-1">
+                                            Cycles: 
+                                            <span class="${t.usageRemaining <= 0 ? 'text-red-500 font-bold' : 'text-[var(--accent-color)] font-bold'}">
+                                                ${t.usageRemaining} / ${t.usageLimit}
+                                            </span>
+                                            ${t.isAdminToken ? '<span class="ml-2 px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800 font-bold text-xs"><i class="fas fa-lock mr-1"></i>ROOT</span>' : ''}
+                                        </p>
+                                    </div>
+                                    <button onclick="deleteToken('${t.id}')" class="app-button danger-button text-xs px-3 py-1 mt-3 sm:mt-0">
+                                        <i class="fas fa-times-circle mr-1"></i> Terminate
+                                    </button>
+                                </div>
+                            `).join('') : '<p class="text-gray-500 text-center py-10 text-base">No active licenses found.</p>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // --- Backend Simulation (Firestore & API Logic) ---
+
+        function getTokensCollectionRef() {
+            return window.firebase.collection(db, 
+                `/artifacts/${FIREBASE_APP_ID}/public/data/tokens`);
+        }
+
+        window.createNewToken = async function() {
+            const valueEl = document.getElementById('new-token-value');
+            const usageEl = document.getElementById('new-token-usage');
+            const isAdminEl = document.getElementById('is-admin-token');
+            
+            const tokenValue = (valueEl.value || '').trim().toUpperCase();
+            const usageLimit = parseInt(usageEl.value);
+            const isAdmin = isAdminEl.checked;
+            
+            const allowedScripts = MOCK_SCRIPTS
+                .filter(script => document.getElementById(`script-${script.id}`).checked)
+                .map(script => script.id);
+
+            if (!tokenValue || isNaN(usageLimit) || usageLimit < 1) {
+                showModal("Input Required", "Key name and usage limit (1+) are needed.", false);
+                return;
+            }
+
+            try {
+                const tokensRef = getTokensCollectionRef();
+                
+                const q = window.firebase.query(tokensRef, window.firebase.where("tokenValue", "==", tokenValue));
+                const existingTokens = await window.firebase.getDocs(q);
+                if (!existingTokens.empty) {
+                    showModal("Conflict", `The license key **${tokenValue}** already exists.`, false);
+                    return;
+                }
+
+                const newToken = {
+                    tokenValue: tokenValue,
+                    allowedScripts: allowedScripts,
+                    usageLimit: usageLimit,
+                    usageRemaining: usageLimit,
+                    isAdminToken: isAdmin,
+                    createdAt: window.firebase.serverTimestamp(),
+                    createdBy: userId
+                };
+
+                await window.firebase.addDoc(tokensRef, newToken);
+                showModal("Success", `License key **${tokenValue}** provisioned.`, true);
+                renderView(VIEW_ADMIN); 
+
+            } catch (error) {
+                console.error("Error creating token:", error);
+                showModal("System Failure", "Failed to create token due to database exception.", false);
+            }
+        }
+
+        window.deleteToken = async function(docId) {
+            const tokensRef = getTokensCollectionRef();
+            try {
+                await window.firebase.deleteDoc(window.firebase.doc(tokensRef, docId));
+                showModal("Deleted", "License entry terminated.", true);
+                renderView(VIEW_ADMIN);
+            } catch (error) {
+                console.error("Error deleting token:", error);
+                showModal("Database Error", "Failed to delete token. Check network link.", false);
+            }
+        }
+
+
+        window.validateToken = async function() {
+            const tokenInput = document.getElementById('token-input');
+            const tokenValue = (tokenInput.value || '').trim().toUpperCase();
+            
+            if (!tokenValue) {
+                tokenInput.focus();
+                tokenInput.classList.add('border-red-500', 'ring-red-500');
+                setTimeout(() => {
+                    tokenInput.classList.remove('border-red-500', 'ring-red-500');
+                }, 1000);
+                return;
+            }
+            
+            await showLoading(200);
+            try {
+                const tokensRef = getTokensCollectionRef();
+                const q = window.firebase.query(tokensRef, window.firebase.where("tokenValue", "==", tokenValue));
+                const snapshot = await window.firebase.getDocs(q);
+                
+                if (snapshot.empty) {
+                    showModal("Access Denied", "The entered key is invalid or unknown.", false);
+                    return;
+                }
+
+                const docSnapshot = snapshot.docs[0];
+                tokenData = { id: docSnapshot.id, ...docSnapshot.data() };
+                
+                if (tokenData.isAdminToken) {
+                    showModal("Root Access Granted", "Administrator shell established.", true);
+                    renderView(VIEW_ADMIN);
+                } else if (tokenData.usageRemaining > 0) {
+                    showModal("Access Granted", "License accepted. Redirecting to catalog.", true);
+                    renderView(VIEW_DASHBOARD);
+                } else {
+                    showModal("License Depleted", "This license key has reached its usage limit.", false);
+                    tokenData = null;
+                }
+                
+            } catch (error) {
+                console.error("Token validation error:", error);
+                showModal("Critical Error", "An unexpected error occurred during validation.", false);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        window.handleDownload = async function(scriptId) {
+            if (!tokenData || tokenData.usageRemaining <= 0) {
+                showModal("Access Denied", "Token is invalid or depleted. Please sign in again.", false);
+                tokenData = null;
+                return renderView(VIEW_TOKEN);
+            }
+
+            const script = MOCK_SCRIPTS.find(s => s.id === scriptId);
+            if (!script) {
+                showModal("Error", "Script ID not found in the catalog.", false);
+                return;
+            }
+
+            const tokenDocRef = window.firebase.doc(getTokensCollectionRef(), tokenData.id);
+            let transactionSuccess = false;
+
+            try {
+                await window.firebase.runTransaction(db, async (transaction) => {
+                    const doc = await transaction.get(tokenDocRef);
+                    if (!doc.exists()) {
+                        throw "Document not found.";
+                    }
+                    
+                    const currentUsage = doc.data().usageRemaining;
+
+                    if (currentUsage > 0) {
+                        const newUsage = currentUsage - 1;
+                        transaction.update(tokenDocRef, { usageRemaining: newUsage });
+                        tokenData.usageRemaining = newUsage; 
+                        transactionSuccess = true;
+                    } else {
+                        throw "Usage limit reached.";
+                    }
+                });
+
+                if (transactionSuccess) {
+                    showModal("Transferring", `Deploying **${script.name}**. Debiting 1 cycle.`, true);
+                    
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    
+                    window.open(script.downloadUrl, '_blank');
+                    
+                    renderView(VIEW_THANKYOU);
+
+                }
+
+            } catch (error) {
+                console.error("Transaction failed:", error);
+                const errorMessage = error.toString().includes("Usage limit reached") 
+                    ? "Access denied. Your usage limit has been reached." 
+                    : "Deployment failed due to a database lock or network issue.";
+                showModal("Deployment Failed", errorMessage, false);
+                renderView(VIEW_DASHBOARD);
+            }
+        }
+
+        // --- Music Player Logic ---
+
+        window.stopMusic = function() {
+            const audioPlayer = document.getElementById('background-music-player');
+            const musicIcon = document.getElementById('music-icon');
+            const musicText = document.getElementById('music-text');
+
+            audioPlayer.pause();
+            audioPlayer.currentTime = 0;
+            musicIcon.classList.remove('fa-volume-up', 'text-green-500');
+            musicIcon.classList.add('fa-volume-off', 'text-gray-400');
+            musicText.textContent = 'Music Off';
+        }
+
+        // --- Initialization ---
+
+        async function handleInitialAuth() {
+            const existingUser = auth.currentUser;
+            if (existingUser) {
+                userId = existingUser.uid;
+                return;
+            }
+
+            try {
+                const userCredential = await window.firebase.signInAnonymously(auth);
+                userId = userCredential.user.uid;
+            } catch (e) {
+                console.warn(`[AUTH] Anonymous sign-in failed. Using fallback ID.`);
+                userId = crypto.randomUUID(); 
+            }
+        }
+
+        async function initializeSystem() {
+            await showLoading(500); 
+
+            updateClock();
+            setInterval(updateClock, 1000); 
+
+            try {
+                const app = window.firebase.initializeApp(EXTERNAL_FIREBASE_CONFIG);
+                auth = window.firebase.getAuth(app);
+                db = window.firebase.getFirestore(app);
+                window.firebase.setLogLevel('debug'); 
+
+                await window.firebase.setPersistence(auth, window.firebase.browserSessionPersistence);
+
+                await handleInitialAuth();
+                
+                await ensureAdminTokenExists();
+                
+                renderView(VIEW_LANDING);
+
+            } catch (error) {
+                console.error("System Initialization Error:", error);
+                document.getElementById('app-container').innerHTML = `
+                    <div class="app-card p-10 max-w-lg w-full text-center">
+                        <h3 class="text-2xl text-red-500 font-bold mb-4">Fatal Error</h3>
+                        <p class="text-gray-600">Could not initialize core services. Check the console log.</p>
+                    </div>
+                `;
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        async function ensureAdminTokenExists() {
+            const ADMIN_TOKEN_VALUE = 'ADMIN-ROOT';
+            try {
+                const tokensRef = getTokensCollectionRef();
+                const q = window.firebase.query(tokensRef, window.firebase.where("tokenValue", "==", ADMIN_TOKEN_VALUE));
+                const snapshot = await window.firebase.getDocs(q);
+
+                if (snapshot.empty) {
+                    const adminDocRef = window.firebase.doc(tokensRef, 'admin-root-doc');
+                    await window.firebase.setDoc(adminDocRef, {
+                        tokenValue: ADMIN_TOKEN_VALUE,
+                        allowedScripts: MOCK_SCRIPTS.map(s => s.id),
+                        usageLimit: 9999,
+                        usageRemaining: 9999,
+                        isAdminToken: true,
+                        createdAt: window.firebase.serverTimestamp(),
+                        createdBy: 'system'
+                    });
+                    console.log("[SYSTEM] Admin root token provisioned.");
+                }
+            } catch (error) {
+                console.error("[SYSTEM] Error provisioning admin token:", error);
+            }
+        }
+
+        // Start the application
+        initializeSystem();
+
+    </script>
+
+</body>
+</html>
