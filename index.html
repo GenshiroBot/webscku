@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GenshiroBot - Script</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Inter font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    
+    <!-- Firebase Imports -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        // NOTE: setPersistence and browserSessionPersistence are also imported here
+        import { getAuth, signInAnonymously, onAuthStateChanged, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, addDoc, getDocs, runTransaction, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // Expose Firebase functions globally for use in the main script block
+        window.firebase = {
+            initializeApp, getAuth, signInAnonymously, onAuthStateChanged,
+            getFirestore, doc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, addDoc, getDocs, runTransaction, getDoc,
+            setLogLevel, setPersistence, browserSessionPersistence, serverTimestamp
+        };
+    </script>
+
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --soft-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            --text-color: #E5E7EB; /* Light gray */
+            --primary-glow: rgba(147, 197, 253, 0.5); /* Blue 300 */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-color);
+            background: linear-gradient(135deg, #1A1A40 0%, #0D0D1A 100%);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Glassmorphism Base Class */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: var(--soft-shadow);
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        /* Futuristic Button Style */
+        .futuristic-button {
+            @apply glass-panel font-bold tracking-wider uppercase px-8 py-4 rounded-xl text-lg relative overflow-hidden;
+            border: none;
+            cursor: pointer;
+        }
+        .futuristic-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.5);
+        }
+        .futuristic-button:active {
+            transform: translateY(0);
+            box-shadow: var(--soft-shadow);
+        }
+
+        /* Input Styles */
+        .glass-input {
+            @apply w-full bg-white/10 text-white placeholder-gray-400 p-4 rounded-xl border border-white/20 focus:outline-none focus:border-blue-400 transition-all duration-300;
+        }
+
+        /* Parallax Background Effect */
+        #app-container {
+            position: relative;
+            z-index: 10;
+        }
+
+        .blur-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            transition: transform 0.1s linear;
+        }
+
+        .sphere {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.6;
+            filter: blur(100px);
+        }
+
+        .sphere-1 { background: #3B82F6; width: 400px; height: 400px; top: 10%; left: 10%; }
+        .sphere-2 { background: #F472B6; width: 500px; height: 500px; bottom: 5%; right: 15%; }
+        .sphere-3 { background: #10B981; width: 300px; height: 300px; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
+        /* Loading Screen Style */
+        #loading-screen {
+            @apply fixed inset-0 flex items-center justify-center bg-gray-900/90 backdrop-blur-xl z-[100] transition-opacity duration-500 ease-in-out;
+        }
+
+        .loading-dot {
+            width: 1rem;
+            height: 1rem;
+            margin: 0 0.5rem;
+            border-radius: 50%;
+            background-color: var(--text-color);
+            animation: dot-loading 1.4s infinite ease-in-out both;
+        }
+        .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes dot-loading {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+
+        /* Shake animation for invalid token */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+        .shake {
+            animation: shake 0.5s;
+        }
+
+        /* Confetti Effect (Simple CSS animation) */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #fff;
+            opacity: 0.7;
+            animation: fall 5s ease-in infinite;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* Scrollbar styling for a cleaner look */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Parallax Blur Background -->
+    <div class="blur-background" id="blur-background">
+        <div class="sphere sphere-1" style="transform: translate(-20%, -20%);"></div>
+        <div class="sphere sphere-2" style="transform: translate(20%, 20%);"></div>
+        <div class="sphere sphere-3"></div>
+    </div>
+
+    <!-- Main Application Container -->
+    <div id="app-container" class="min-h-screen flex flex-col items-center justify-center p-4">
+        <!-- Content will be rendered here by JavaScript -->
+    </div>
+
+    <!-- Reusable Pop-up/Modal (Success/Failure/Info) -->
+    <div id="modal-container" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center transition-opacity duration-300">
+        <div id="modal-content" class="glass-panel p-8 max-w-sm w-full text-center transform scale-90 opacity-0 transition-all duration-500 ease-out">
+            <h3 id="modal-title" class="text-3xl font-extrabold mb-4"></h3>
+            <p id="modal-message" class="mb-6"></p>
+            <button onclick="hideModal()" class="futuristic-button bg-blue-500/30 text-white shadow-lg shadow-blue-500/20">
+                OK
+            </button>
+        </div>
+    </div>
+    
+    <!-- Initial Loading Screen -->
+    <div id="loading-screen">
+        <div class="flex">
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+        </div>
+    </div>
+
+
+<script type="module">
+    // Global Constants and Variables
+    const VIEW_LANDING = 'landing';
+    const VIEW_TOKEN = 'token';
+    const VIEW_DASHBOARD = 'dashboard';
+    const VIEW_THANKYOU = 'thankyou';
+    const VIEW_ADMIN = 'admin';
+
+    let currentView = VIEW_LANDING;
+    let auth, db, userId;
+    let tokenData = null;
+    let tokenListener = null;
+
+    // --- EXTERNAL FIREBASE CONFIGURATION ---
+    // NOTE: For security in a real deployment, these values should be moved to environment variables (e.g., Vercel Secrets)
+    const EXTERNAL_FIREBASE_CONFIG = {
+        apiKey: "AIzaSyBIChk3UzndLZJPqBZqsM_64crAmqkSxeA", 
+        authDomain: "websitescript-cfd0b.firebaseapp.com",
+        projectId: "websitescript-cfd0b",
+        storageBucket: "websitescript-cfd0b.firebasestorage.app",
+        messagingSenderId: "407456156819",
+        appId: "1:407456156819:web:f46b794241e385c3b71166",
+        measurementId: "G-CZXZNQSVLZ"
+    };
+    
+    // The App ID used in the Firestore path (derived from your config)
+    const FIREBASE_APP_ID = "1:407456156819:web:f46b794241e3855c3b71166"; // Adjusted to match your config structure
+
+    // --- Global Data Structures ---
+    const MOCK_SCRIPTS = [
+        { id: 'simplebase', name: 'GenshiroBot-SimpleBase', version: '1.0.0', size: '3KB', updated: '2025-10-01', description: 'SimpleBase bot whatsapp cocok buat kalian yang mau buat bot tanpa ribet', changelog: 'GoodBase' },
+        { id: 'simple-bot', name: 'Simple Bot Framework', version: '1.5.0', size: '450 KB', updated: '2025-09-15', description: 'A lightweight, easy-to-configure automation bot for simple tasks and quick deployment.', changelog: 'Improved config parser. Switched to a more efficient YAML format. Minor UI fixes.' },
+        { id: 'data-harvester', name: 'Data Harvester Pro', version: '2.0.1', size: '3.5 MB', updated: '2025-10-02', description: 'Enterprise-grade parallel data extraction tool with dynamic proxy rotation support.', changelog: 'Introduced parallel processing for 10x speedup. New proxy management module. Security enhancements.' },
+    ];
+
+
+    // --- Helper Functions ---
+
+    /** Parallax effect for the background spheres */
+    window.addEventListener('mousemove', (e) => {
+        const background = document.getElementById('blur-background');
+        if (!background) return;
+
+        const x = (window.innerWidth - e.pageX * 0.05) / 100;
+        const y = (window.innerHeight - e.pageY * 0.05) / 100;
+
+        background.style.transform = `translate(${x}px, ${y}px)`;
+    });
+
+    /** Show the interactive loading screen */
+    function showLoading() {
+        const loadingScreen = document.getElementById('loading-screen');
+        loadingScreen.classList.remove('hidden', 'opacity-0');
+        loadingScreen.classList.add('flex', 'opacity-100');
+    }
+
+    /** Hide the interactive loading screen */
+    function hideLoading() {
+        const loadingScreen = document.getElementById('loading-screen');
+        loadingScreen.classList.remove('opacity-100');
+        loadingScreen.classList.add('opacity-0');
+        setTimeout(() => {
+            loadingScreen.classList.remove('flex');
+            loadingScreen.classList.add('hidden');
+        }, 500); // Wait for transition
+    }
+
+    /** Display a custom modal instead of alert/confirm */
+    window.showModal = function (title, message, isSuccess = true) {
+        const container = document.getElementById('modal-container');
+        const content = document.getElementById('modal-content');
+        const titleEl = document.getElementById('modal-title');
+        const messageEl = document.getElementById('modal-message');
+        const buttonEl = content.querySelector('button');
+
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+
+        // Apply premium glow/shake effects
+        content.classList.remove('shake', 'shadow-blue-500/20', 'shadow-red-500/20');
+        buttonEl.classList.remove('bg-red-500/30', 'shadow-red-500/20', 'bg-blue-500/30', 'shadow-blue-500/20');
+
+        if (isSuccess) {
+            content.classList.add('shadow-blue-500/20');
+            buttonEl.classList.add('bg-blue-500/30', 'shadow-blue-500/20');
+            // Optional: add confetti for success
+            if (currentView === VIEW_TOKEN) spawnConfetti(container);
+        } else {
+            content.classList.add('shake', 'shadow-red-500/20');
+            buttonEl.classList.add('bg-red-500/30', 'shadow-red-500/20');
+        }
+
+        container.classList.remove('hidden');
+        container.classList.add('flex', 'opacity-100');
+        setTimeout(() => {
+            content.classList.remove('scale-90', 'opacity-0');
+            content.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+
+    window.hideModal = function () {
+        const container = document.getElementById('modal-container');
+        const content = document.getElementById('modal-content');
+        
+        content.classList.remove('scale-100', 'opacity-100');
+        content.classList.add('scale-90', 'opacity-0');
+
+        setTimeout(() => {
+            container.classList.remove('flex', 'opacity-100');
+            container.classList.add('hidden', 'opacity-0');
+            // Clean up confetti
+            document.querySelectorAll('.confetti').forEach(c => c.remove());
+        }, 500);
+    }
+
+    function spawnConfetti(container) {
+        for (let i = 0; i < 20; i++) {
+            const confetti = document.createElement('div');
+            confetti.classList.add('confetti');
+            confetti.style.left = `${Math.random() * 100}vw`;
+            confetti.style.backgroundColor = ['#3B82F6', '#F472B6', '#10B981'][Math.floor(Math.random() * 3)];
+            confetti.style.animationDelay = `${Math.random() * 2}s`;
+            confetti.style.animationDuration = `${3 + Math.random() * 3}s`;
+            container.appendChild(confetti);
+        }
+    }
+
+
+    /** Main render function to switch views */
+    window.renderView = async function(view) {
+        showLoading();
+        currentView = view;
+        const container = document.getElementById('app-container');
+        container.innerHTML = '';
+        
+        // Ensure authentication is ready before proceeding to secure views
+        if (!userId && view !== VIEW_LANDING) {
+             console.error("Authentication not ready. Redirecting to landing.");
+             return renderView(VIEW_LANDING);
+        }
+
+        const viewMap = {
+            [VIEW_LANDING]: renderLanding,
+            [VIEW_TOKEN]: renderTokenPage,
+            [VIEW_DASHBOARD]: renderScriptDashboard,
+            [VIEW_THANKYOU]: renderThankYouPage,
+            [VIEW_ADMIN]: renderAdminPanel
+        };
+
+        if (viewMap[view]) {
+            await viewMap[view](container);
+        } else {
+            container.innerHTML = `<div class="glass-panel p-10">404 | View Not Found</div>`;
+        }
+
+        hideLoading();
+    }
+
+    // --- View Rendering Functions ---
+
+    /** 1. Landing Page */
+    async function renderLanding(container) {
+        container.classList.remove('justify-start');
+        container.classList.add('justify-center');
+        container.innerHTML = `
+            <div class="text-center p-8 lg:p-16 glass-panel max-w-lg mx-auto transform transition-all duration-700 ease-out">
+                <h1 class="text-6xl lg:text-8xl font-black mb-4 tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-pink-300">
+                    GenshiroBot
+                </h1>
+                <p class="text-xl lg:text-2xl font-light mb-10 text-gray-300">
+                    Your portal to advanced, secure script downloads. Welcome to the future of utility software.
+                </p>
+                <button onclick="renderView('${VIEW_TOKEN}')" class="futuristic-button bg-blue-500/30 text-white shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/40">
+                    Continue &rarr;
+                </button>
+            </div>
+        `;
+    }
+
+    /** 2. User Token Page */
+    async function renderTokenPage(container) {
+        container.classList.remove('justify-start');
+        container.classList.add('justify-center');
+        container.innerHTML = `
+            <div id="token-form-container" class="p-8 lg:p-12 glass-panel max-w-md w-full mx-auto transform transition-all duration-700 ease-out">
+                <h2 class="text-4xl font-bold mb-6 tracking-tight">Access Token</h2>
+                <p class="text-gray-400 mb-6">Enter your unique token below to unlock your scripts dashboard.</p>
+                
+                <input type="text" id="token-input" placeholder="e.g., AB12-CD34-EF56" class="glass-input text-center text-2xl tracking-widest uppercase mb-6" maxlength="15">
+                
+                <div class="flex flex-col space-y-4">
+                    <button onclick="validateToken()" class="futuristic-button bg-blue-500/30 text-white shadow-lg shadow-blue-500/20">
+                        Access Dashboard
+                    </button>
+                    <button onclick="renderView('${VIEW_LANDING}')" class="futuristic-button bg-white/5 text-gray-400 text-sm py-2">
+                        Back to Landing
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    /** 3. Script Dashboard */
+    async function renderScriptDashboard(container) {
+        if (!tokenData || tokenData.usageRemaining <= 0) {
+            tokenData = null;
+            return renderView(VIEW_TOKEN);
+        }
+
+        const allowedScriptsData = MOCK_SCRIPTS.filter(script => tokenData.allowedScripts.includes(script.id));
+        
+        container.classList.remove('justify-center');
+        container.classList.add('justify-start', 'py-16');
+
+        container.innerHTML = `
+            <div class="w-full max-w-4xl mx-auto mb-8">
+                <h2 class="text-5xl font-extrabold tracking-tighter mb-2">Script Dashboard</h2>
+                <p class="text-gray-400">Token Active: <span class="font-mono text-blue-300">${tokenData.tokenValue}</span> | Downloads Remaining: <span class="font-mono text-pink-300">${tokenData.usageRemaining}</span></p>
+                <p class="text-gray-500 text-sm mt-1">Scripts available for this token.</p>
+            </div>
+            <div class="w-full max-w-4xl mx-auto space-y-8" id="scripts-list">
+                <!-- Scripts will be injected here -->
+            </div>
+        `;
+        
+        const scriptsListEl = document.getElementById('scripts-list');
+        allowedScriptsData.forEach((script, index) => {
+            const scriptCard = document.createElement('div');
+            // Smooth fade-in and scale-in animation
+            scriptCard.className = `glass-panel p-6 lg:p-8 flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0 transform translate-y-4 opacity-0 transition-all duration-700 ease-out delay-${index*100}`;
+            scriptCard.style.animationDelay = `${index * 0.1}s`;
+            
+            scriptCard.innerHTML = `
+                <div class="flex-grow">
+                    <h3 class="text-3xl font-bold mb-2 text-white">${script.name}</h3>
+                    <p class="text-lg text-gray-300 mb-3">${script.description}</p>
+                    
+                    <div class="flex flex-wrap items-center text-sm font-medium space-x-4 mb-4 text-gray-400">
+                        <span><strong class="text-blue-300">Version:</strong> ${script.version}</span>
+                        <span><strong class="text-blue-300">Size:</strong> ${script.size}</span>
+                        <span><strong class="text-blue-300">Last Update:</strong> ${script.updated}</span>
+                    </div>
+
+                    <details class="text-gray-400 cursor-pointer transition-all duration-300">
+                        <summary class="font-semibold text-pink-300 hover:text-pink-400">View Changelog</summary>
+                        <pre class="mt-2 text-xs lg:text-sm p-4 bg-black/20 rounded-lg overflow-auto border border-white/10">${script.changelog}</pre>
+                    </details>
+                </div>
+                
+                <button onclick="handleDownload('${script.id}')" class="futuristic-button bg-pink-500/30 text-white shadow-lg shadow-pink-500/20 w-full lg:w-auto flex-shrink-0 mt-4 lg:mt-0">
+                    Download
+                </button>
+            `;
+            scriptsListEl.appendChild(scriptCard);
+            // Trigger animation
+            setTimeout(() => {
+                scriptCard.classList.remove('translate-y-4', 'opacity-0');
+            }, 10);
+        });
+    }
+
+    /** 4. Thank You & Subscribe Page */
+    async function renderThankYouPage(container) {
+        container.classList.remove('justify-start');
+        container.classList.add('justify-center');
+        container.innerHTML = `
+            <div class="text-center p-8 lg:p-16 glass-panel max-w-lg mx-auto transform scale-90 opacity-0 transition-all duration-1000 ease-out" id="thankyou-card">
+                <div class="text-7xl mb-6 transform rotate-6 animate-pulse">🎉</div>
+                <h2 class="text-5xl font-black mb-4 tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-green-300">
+                    Download Complete!
+                </h2>
+                <p class="text-xl font-light mb-10 text-gray-300">
+                    Thank you for trusting Nexus. Your script is secured and ready for execution.
+                </p>
+                <p class="text-lg text-gray-400 mb-8">
+                    To maintain continuous access to updates and premium features, consider subscribing to our service.
+                </p>
+                
+                <div class="space-y-4">
+                    <button onclick="console.log('Redirecting to subscription...'); showModal('Thank You!', 'Subscription portal is a separate service. Redirecting now...', true);" class="futuristic-button bg-green-500/30 text-white shadow-lg shadow-green-500/20">
+                        Subscribe Now
+                    </button>
+                    <button onclick="tokenData = null; renderView('${VIEW_LANDING}')" class="futuristic-button bg-white/5 text-gray-400 text-sm py-2">
+                        Grab Another Script
+                    </button>
+                </div>
+            </div>
+        `;
+        // Trigger animation and confetti
+        spawnConfetti(container);
+        setTimeout(() => {
+            document.getElementById('thankyou-card').classList.remove('scale-90', 'opacity-0');
+            document.getElementById('thankyou-card').classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+
+    /** 5. Admin Panel */
+    async function renderAdminPanel(container) {
+        if (!tokenData || !tokenData.isAdminToken) {
+            tokenData = null;
+            return renderView(VIEW_TOKEN); // Should be checked by validateToken, but as a safeguard
+        }
+
+        container.classList.remove('justify-center');
+        container.classList.add('justify-start', 'py-16');
+        
+        // Fetch current tokens for the admin dashboard
+        let tokenList = [];
+        try {
+            const tokensRef = getTokensCollectionRef();
+            const q = firebase.query(tokensRef);
+            const snapshot = await firebase.getDocs(q);
+            tokenList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(t => t.tokenValue !== 'ADMIN-ROOT');
+        } catch (error) {
+            console.error("Error fetching tokens:", error);
+            showModal("Error", "Could not load token list.", false);
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="w-full max-w-6xl mx-auto mb-10">
+                <h2 class="text-5xl font-extrabold tracking-tighter mb-2">Admin Panel</h2>
+                <p class="text-gray-400">Manage user tokens and access permissions.</p>
+            </div>
+            
+            <div class="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Create New Token Panel (Col 1/2) -->
+                <div class="lg:col-span-1 glass-panel p-6">
+                    <h3 class="text-2xl font-bold mb-4 border-b border-white/10 pb-2">Create New Token</h3>
+                    <div class="space-y-4">
+                        <input type="text" id="new-token-value" placeholder="Token Value (e.g., NEXUS123)" class="glass-input text-base uppercase">
+                        <input type="number" id="new-token-usage" placeholder="Usage Limit (e.g., 5)" class="glass-input text-base" min="1" value="5">
+                        
+                        <div class="space-y-2">
+                            <label class="block text-gray-300">Allowed Scripts:</label>
+                            ${MOCK_SCRIPTS.map(script => `
+                                <label class="flex items-center space-x-3 text-sm">
+                                    <input type="checkbox" id="script-${script.id}" value="${script.id}" class="h-4 w-4 text-blue-400 bg-white/10 rounded border-gray-600 focus:ring-blue-500">
+                                    <span>${script.name}</span>
+                                </label>
+                            `).join('')}
+                        </div>
+
+                        <label class="flex items-center space-x-3 text-sm">
+                            <input type="checkbox" id="is-admin-token" class="h-4 w-4 text-pink-400 bg-white/10 rounded border-gray-600 focus:ring-pink-500">
+                            <span class="font-bold text-pink-300">Is Admin Token?</span>
+                        </label>
+                        
+                        <button onclick="createNewToken()" class="futuristic-button bg-green-500/30 text-white shadow-lg shadow-green-500/20 w-full">
+                            Generate Token
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Active Tokens List (Col 2/3) -->
+                <div class="lg:col-span-2 glass-panel p-6 overflow-hidden">
+                    <h3 class="text-2xl font-bold mb-4 border-b border-white/10 pb-2">Active User Tokens (${tokenList.length})</h3>
+                    <div class="space-y-4 max-h-[70vh] overflow-y-auto pr-2" id="token-list-container">
+                        ${tokenList.length > 0 ? tokenList.map(t => `
+                            <div class="p-4 bg-black/20 rounded-lg flex justify-between items-center border border-white/10 transition duration-300 hover:border-blue-400/50">
+                                <div>
+                                    <p class="font-mono text-xl text-blue-300">${t.tokenValue}</p>
+                                    <p class="text-sm text-gray-400">
+                                        Scripts: <span class="font-semibold">${t.allowedScripts.join(', ') || 'None'}</span> | 
+                                        Usage: <span class="${t.usageRemaining <= 0 ? 'text-red-400' : 'text-green-400'}">${t.usageRemaining} / ${t.usageLimit}</span>
+                                    </p>
+                                </div>
+                                <button onclick="deleteToken('${t.id}')" class="text-red-400 hover:text-red-500 transition duration-200 p-2 rounded-full hover:bg-white/10">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                        `).join('') : '<p class="text-gray-500 text-center py-8">No user tokens found.</p>'}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="w-full max-w-6xl mx-auto mt-8">
+                <button onclick="tokenData = null; renderView('${VIEW_LANDING}')" class="futuristic-button bg-white/5 text-gray-400 text-sm py-2 px-6">
+                    Logout Admin
+                </button>
+            </div>
+        `;
+    }
+
+    // --- Backend Simulation (Firestore & API Logic) ---
+
+    /** Get Firestore collection reference for tokens (Public Data) */
+    function getTokensCollectionRef() {
+        // Uses the hardcoded FIREBASE_APP_ID for the public data path
+        return firebase.collection(db, 
+            `/artifacts/${FIREBASE_APP_ID}/public/data/tokens`);
+    }
+
+    /** ADMIN: Create New Token Logic */
+    window.createNewToken = async function() {
+        const valueEl = document.getElementById('new-token-value');
+        const usageEl = document.getElementById('new-token-usage');
+        const isAdminEl = document.getElementById('is-admin-token');
+        
+        const tokenValue = (valueEl.value || '').trim().toUpperCase();
+        const usageLimit = parseInt(usageEl.value);
+        const isAdmin = isAdminEl.checked;
+        
+        const allowedScripts = MOCK_SCRIPTS
+            .filter(script => document.getElementById(`script-${script.id}`).checked)
+            .map(script => script.id);
+
+        if (!tokenValue || isNaN(usageLimit) || usageLimit < 1) {
+            showModal("Input Error", "Please provide a valid token value and a usage limit (must be 1+).", false);
+            return;
+        }
+
+        try {
+            const tokensRef = getTokensCollectionRef();
+            
+            // 1. Check for existing token value
+            const q = firebase.query(tokensRef, firebase.where("tokenValue", "==", tokenValue));
+            const existingTokens = await firebase.getDocs(q);
+            if (!existingTokens.empty) {
+                showModal("Creation Failed", `Token value '${tokenValue}' already exists.`, false);
+                return;
+            }
+
+            // 2. Add new token
+            const newToken = {
+                tokenValue: tokenValue,
+                allowedScripts: allowedScripts,
+                usageLimit: usageLimit,
+                usageRemaining: usageLimit,
+                isAdminToken: isAdmin,
+                createdAt: firebase.serverTimestamp(),
+                createdBy: userId
+            };
+
+            await firebase.addDoc(tokensRef, newToken);
+            showModal("Token Created!", `New token ${tokenValue} created with ${usageLimit} usage limit.`, true);
+            // Re-render admin panel to show new token
+            renderView(VIEW_ADMIN); 
+
+        } catch (error) {
+            console.error("Error creating token:", error);
+            showModal("API Error", "Failed to create token due to a database error. Check console for details.", false);
+        }
+    }
+
+    /** ADMIN: Delete Token Logic */
+    window.deleteToken = async function(docId) {
+        try {
+            const tokensRef = getTokensCollectionRef();
+            await firebase.deleteDoc(firebase.doc(tokensRef, docId));
+            showModal("Token Deleted", "The token has been successfully removed.", true);
+            renderView(VIEW_ADMIN);
+        } catch (error) {
+            console.error("Error deleting token:", error);
+            showModal("API Error", "Failed to delete token. Check console for details.", false);
+        }
+    }
+
+
+    /** USER/ADMIN: Validate Token Logic */
+    window.validateToken = async function() {
+        const tokenInput = document.getElementById('token-input');
+        const tokenValue = (tokenInput.value || '').trim().toUpperCase();
+        const container = document.getElementById('token-form-container');
+
+        if (!tokenValue) {
+            container.classList.add('shake');
+            setTimeout(() => container.classList.remove('shake'), 500);
+            return;
+        }
+        
+        showLoading();
+        try {
+            const tokensRef = getTokensCollectionRef();
+            const q = firebase.query(tokensRef, firebase.where("tokenValue", "==", tokenValue));
+            const snapshot = await firebase.getDocs(q);
+            
+            if (snapshot.empty) {
+                // Invalid Token
+                showLoading(); // Hide loading after popup
+                showModal("Access Denied", "Token not found. Please check your input and try again.", false);
+                container.classList.add('shake');
+                setTimeout(() => container.classList.remove('shake'), 500);
+                tokenInput.value = '';
+                return;
+            }
+
+            const docSnapshot = snapshot.docs[0];
+            tokenData = { id: docSnapshot.id, ...docSnapshot.data() };
+            
+            if (tokenData.isAdminToken) {
+                // Admin Token Success
+                showModal("Admin Access Granted", "Welcome, Administrator. Redirecting to the management panel.", true);
+                setTimeout(() => renderView(VIEW_ADMIN), 1500);
+            } else if (tokenData.usageRemaining > 0) {
+                // Valid User Token Success
+                showModal("Access Granted", "Token validated successfully. Redirecting to your script dashboard.", true);
+                setTimeout(() => renderView(VIEW_DASHBOARD), 1500);
+            } else {
+                // Expired User Token
+                showModal("Token Expired", "This token has run out of remaining usage. Please contact support.", false);
+                tokenData = null;
+            }
+            
+        } catch (error) {
+            console.error("Token validation error:", error);
+            showModal("System Error", "A critical error occurred during token validation. Check console for details.", false);
+        } finally {
+            hideLoading();
+        }
+    }
+
+    /** USER: Handle Download and Update Usage */
+    window.handleDownload = async function(scriptId) {
+        if (!tokenData || tokenData.usageRemaining <= 0) {
+            showModal("Error", "Token expired or not found. Please log in again.", false);
+            tokenData = null;
+            return renderView(VIEW_TOKEN);
+        }
+
+        const tokenDocRef = firebase.doc(getTokensCollectionRef(), tokenData.id);
+        let transactionSuccess = false;
+
+        try {
+            await firebase.runTransaction(db, async (transaction) => {
+                const doc = await transaction.get(tokenDocRef);
+                if (!doc.exists()) {
+                    throw "Document does not exist!";
+                }
+                
+                const currentUsage = doc.data().usageRemaining;
+
+                if (currentUsage > 0) {
+                    const newUsage = currentUsage - 1;
+                    transaction.update(tokenDocRef, { usageRemaining: newUsage });
+                    tokenData.usageRemaining = newUsage; // Update local state
+                    transactionSuccess = true;
+                } else {
+                    throw "Usage limit reached.";
+                }
+            });
+
+            if (transactionSuccess) {
+                // Simulate download process
+                showLoading();
+                await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate file transfer time
+                hideLoading();
+
+                showModal("Downloading...", `${MOCK_SCRIPTS.find(s => s.id === scriptId).name} is being prepared.`, true);
+                setTimeout(() => {
+                    renderView(VIEW_THANKYOU);
+                }, 1000);
+
+            } else {
+                showModal("Download Blocked", "This token has no remaining downloads.", false);
+            }
+
+        } catch (error) {
+            console.error("Transaction failed:", error);
+            showModal("Transaction Failed", error.toString().includes("Usage limit reached") ? "Usage limit reached for this token." : "A critical error occurred during download.", false);
+        }
+    }
+
+    // --- Initialization ---
+
+    /** New dedicated function for handling initial authentication setup */
+    async function handleInitialAuth() {
+        // Use a flag to avoid unnecessary network calls if we already have a persistent user
+        const existingUser = auth.currentUser;
+        
+        if (existingUser) {
+            userId = existingUser.uid;
+            console.log(`Firebase: Reusing existing user ID: ${userId}`);
+            return;
+        }
+
+        try {
+            // 1. Try to sign in anonymously (requires anonymous auth to be enabled in Firebase Console)
+            const userCredential = await firebase.signInAnonymously(auth);
+            userId = userCredential.user.uid;
+            console.log("Firebase: Signed in anonymously successfully.");
+            
+        } catch (e) {
+            // 2. Catch the 'auth/configuration-not-found' error (or any other auth failure)
+            console.warn(`Firebase Auth Failure. Using fallback ID. Enable Anonymous Auth in Firebase Console if you see 'auth/configuration-not-found'. Error: ${e.message}`);
+            // Use a random UUID as the fallback user identifier
+            userId = crypto.randomUUID();
+        }
+    }
+
+
+    async function initializeApp() {
+        
+        try {
+            // 1. Initialize Firebase with external config
+            const app = firebase.initializeApp(EXTERNAL_FIREBASE_CONFIG);
+            auth = firebase.getAuth(app);
+            db = firebase.getFirestore(app);
+            firebase.setLogLevel('debug'); // For dev logging
+
+            // Set persistence to session to maintain state
+            await firebase.setPersistence(auth, firebase.browserSessionPersistence);
+
+            // 2. Handle initial authentication (sign-in or use fallback ID)
+            await handleInitialAuth();
+            
+            // 3. Check for initial ADMIN-ROOT token and create if missing
+            await ensureAdminTokenExists();
+            
+            // 4. Initial Render
+            renderView(VIEW_LANDING);
+
+        } catch (error) {
+            console.error("Firebase Initialization Error:", error);
+            document.getElementById('app-container').innerHTML = `<div class="glass-panel p-10"><h3 class="text-red-400">Fatal Error</h3><p>Could not initialize Firebase or authentication. Check your API keys and ensure Firestore is running.</p></div>`;
+            hideLoading();
+        }
+    }
+    
+    /** Ensures the 'ADMIN-ROOT' token exists for the admin panel login simulation. */
+    async function ensureAdminTokenExists() {
+        const ADMIN_TOKEN_VALUE = 'ADMIN-ROOT';
+        try {
+            const tokensRef = getTokensCollectionRef();
+            const q = firebase.query(tokensRef, firebase.where("tokenValue", "==", ADMIN_TOKEN_VALUE));
+            const snapshot = await firebase.getDocs(q);
+
+            if (snapshot.empty) {
+                const adminDocRef = firebase.doc(tokensRef, 'admin-root-doc');
+                await firebase.setDoc(adminDocRef, {
+                    tokenValue: ADMIN_TOKEN_VALUE,
+                    allowedScripts: MOCK_SCRIPTS.map(s => s.id),
+                    usageLimit: 9999,
+                    usageRemaining: 9999,
+                    isAdminToken: true,
+                    createdAt: new Date(),
+                    createdBy: 'system'
+                });
+                console.log("ADMIN-ROOT token created successfully.");
+            }
+        } catch (error) {
+            console.error("Error ensuring admin token:", error);
+        }
+    }
+
+    // Start the application after all script modules are loaded
+    initializeApp();
+
+</script>
+
+</body>
+</html>
